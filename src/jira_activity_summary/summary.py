@@ -44,18 +44,27 @@ class ActivitySummary:
 
 
 # Common status names that indicate completion, progress, todo, or blocked
-STATUS_COMPLETED = frozenset(
-    {"done", "closed", "resolved", "complete", "finished", "released"}
-)
-STATUS_IN_PROGRESS = frozenset(
-    {"in progress", "in review", "code review", "testing", "qa", "in development"}
-)
-STATUS_BLOCKED = frozenset(
-    {"blocked", "on hold", "waiting", "blocked by dependency"}
-)
-STATUS_TODO = frozenset(
-    {"to do", "open", "backlog", "ready", "ready for dev", "planned"}
-)
+STATUS_COMPLETED = frozenset({
+    "done", "closed", "resolved", "complete", "finished", "released",
+    # Português
+    "fechado", "fechada", "concluído", "concluida", "resolvido", "resolvida",
+    "implementado", "entregue", "finalizado", "finalizada",
+    # Outras variações
+    "implemented", "delivered", "shipped", "deployed", "cancelled", "canceled",
+})
+STATUS_IN_PROGRESS = frozenset({
+    "in progress", "in review", "code review", "testing", "qa", "in development",
+    "em progresso", "em desenvolvimento", "em revisão", "em teste",
+    "development", "progress", "review",
+})
+STATUS_BLOCKED = frozenset({
+    "blocked", "on hold", "waiting", "blocked by dependency",
+    "bloqueado", "aguardando", "em espera",
+})
+STATUS_TODO = frozenset({
+    "to do", "open", "backlog", "ready", "ready for dev", "planned",
+    "a fazer", "pendente", "novo", "open",
+})
 
 
 def _normalize_status(s: str) -> str:

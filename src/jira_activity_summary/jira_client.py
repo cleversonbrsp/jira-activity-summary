@@ -23,6 +23,7 @@ class JiraIssue:
     project: str
     labels: list[str] = field(default_factory=list)
     parent_key: str | None = None
+    is_subtask: bool = False
     epic_key: str | None = None
     story_points: float | None = None
     description: str = ""
@@ -34,6 +35,9 @@ class JiraIssue:
         fields = issue.fields
         status = getattr(fields.status, "name", "Unknown") if fields.status else "Unknown"
         issue_type = getattr(fields.issuetype, "name", "Unknown") if fields.issuetype else "Unknown"
+        is_subtask = getattr(fields.issuetype, "subtask", False) if fields.issuetype else False
+        if not is_subtask and issue_type:
+            is_subtask = str(issue_type).lower() in ("sub-task", "subtask", "sub-tarefa")
         priority = getattr(fields.priority, "name", None) if fields.priority else None
         assignee = getattr(fields.assignee, "displayName", None) if fields.assignee else None
         project = getattr(fields.project, "key", "Unknown") if fields.project else "Unknown"
@@ -52,10 +56,21 @@ class JiraIssue:
                 pass
         description_raw = getattr(fields, "description", None)
         description = extract_description(description_raw)
+        # Fallback: último comentário (o que foi feito / próximos passos)
+        comments_text = ""
+        comment_obj = getattr(fields, "comment", None)
+        if comment_obj:
+            comments = getattr(comment_obj, "comments", None) or []
+            if comments:
+                last = comments[-1]
+                body = getattr(last, "body", None)
+                if body:
+                    comments_text = extract_description(body)
         content_summary = summarize_for_executives(
-            description,
+            description or comments_text,
             summary_title=fields.summary or "",
-            max_length=200,
+            status=status,
+            max_length=150,
         )
         return cls(
             key=issue.key,
@@ -69,6 +84,7 @@ class JiraIssue:
             project=project,
             labels=labels,
             parent_key=parent_key,
+            is_subtask=is_subtask or (parent_key is not None),
             epic_key=epic_key,
             story_points=story_points,
             description=description,
@@ -96,6 +112,21 @@ class JiraClient:
                 jql_str=jql,
                 startAt=start_at,
                 maxResults=min(50, max_results - len(issues)),
+                expand="renderedFields",
+                fields=[
+                    "summary",
+                    "status",
+                    "issuetype",
+                    "description",
+                    "comment",
+                    "parent",
+                    "priority",
+                    "assignee",
+                    "created",
+                    "updated",
+                    "project",
+                    "labels",
+                ],
             )
             for issue in batch:
                 issues.append(JiraIssue.from_jira_issue(issue))

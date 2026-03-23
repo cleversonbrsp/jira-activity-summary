@@ -40,3 +40,20 @@ def test_summarize_for_executives_empty_returns_empty() -> None:
     assert summarize_for_executives("") == ""
     assert summarize_for_executives("   ") == ""
 
+
+def test_summarize_empty_when_no_useful_description() -> None:
+    """Não mostrar 'Situação: X' - não reflete o que foi feito nem próximos passos."""
+    result = summarize_for_executives("", summary_title="finops app", status="Fechada")
+    assert result == ""
+
+
+def test_summarize_avoids_duplicating_title() -> None:
+    result = summarize_for_executives("finops app", summary_title="finops app")
+    assert result == ""  # Same as title, no value added
+
+
+def test_summarize_extracts_bullets() -> None:
+    desc = "- Implementar dashboard\n- Configurar alertas\n- Documentar"
+    result = summarize_for_executives(desc)
+    assert "dashboard" in result or "alertas" in result
+

@@ -6,7 +6,13 @@ import click
 
 from .config import load_config
 from .jira_client import JiraClient
-from .report import format_console, format_english_markdown, format_markdown
+from .report import (
+    format_console,
+    format_english_markdown,
+    format_english_txt,
+    format_markdown,
+    format_txt,
+)
 from .summary import build_summary
 
 
@@ -46,9 +52,9 @@ from .summary import build_summary
 @click.option(
     "--format",
     "output_format",
-    type=click.Choice(["markdown", "english", "console"]),
-    default="markdown",
-    help="Output format (default: markdown)",
+    type=click.Choice(["markdown", "txt", "english", "console"]),
+    default="txt",
+    help="Output format: txt (plain text), markdown, english, console (default: txt)",
 )
 @click.option(
     "--output", "-o",
@@ -69,6 +75,12 @@ from .summary import build_summary
     default="pt",
     help="Report language: pt (Portuguese) or en (English)",
 )
+@click.option(
+    "--include-subtasks/--no-subtasks",
+    "include_subtasks",
+    default=False,
+    help="Incluir sub-tasks (tarefas filhas). Padrão: excluir, mostrar só tasks principais.",
+)
 def main(
     env_file: Path | None,
     project: str | None,
@@ -79,6 +91,7 @@ def main(
     output_file: Path | None,
     max_results: int,
     lang: str,
+    include_subtasks: bool,
 ) -> None:
     """Fetch Jira tasks and generate activity summaries for leadership."""
     try:
@@ -97,12 +110,20 @@ def main(
     client = JiraClient(config)
     click.echo(f"Fetching issues (JQL: {config.build_jql()[:80]}...)", err=True)
     issues = client.fetch_issues(max_results=max_results)
-    click.echo(f"Found {len(issues)} issues.", err=True)
+
+    if not include_subtasks:
+        before = len(issues)
+        issues = [i for i in issues if not i.is_subtask]
+        click.echo(f"Found {len(issues)} issues ({before - len(issues)} sub-tasks excluídas).", err=True)
+    else:
+        click.echo(f"Found {len(issues)} issues.", err=True)
 
     summary = build_summary(issues)
 
     if output_format == "console":
         report = format_console(summary)
+    elif output_format == "txt":
+        report = format_english_txt(summary) if lang == "en" else format_txt(summary)
     elif lang == "en" or output_format == "english":
         report = format_english_markdown(summary)
     else:

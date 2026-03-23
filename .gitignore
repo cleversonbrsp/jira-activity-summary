@@ -27,3 +27,16 @@ htmlcov/
 # OS
 .DS_Store
 Thumbs.db
+
+# Relatórios gerados pela app
+relatorio*.txt
+relatorio*.md
+report*.txt
+report*.md
+resumo*.txt
+resumo*.md
+activity*.txt
+activity*.md
+summary*.txt
+summary*.md
+relatorios/

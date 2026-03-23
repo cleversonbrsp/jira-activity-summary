@@ -52,33 +52,67 @@ def _clean_text(text: str) -> str:
     return text.strip()
 
 
+def _normalize_for_compare(s: str) -> str:
+    """Normalize string for similarity comparison."""
+    return re.sub(r"\s+", " ", s.lower().strip())[:50]
+
+
+def _extract_bullets(text: str, max_items: int = 2) -> str:
+    """Extract first bullet/numbered items from text."""
+    lines = [line.strip() for line in text.split("\n") if line.strip()]
+    items = []
+    for line in lines:
+        m = re.match(r"^[-*•]\s+(.+)", line) or re.match(r"^\d+[.)]\s+(.+)", line)
+        if m:
+            items.append(_clean_text(m.group(1)))
+        elif items:
+            break
+    if items:
+        return " | ".join(items[:max_items])[:150]
+    # ADF pode vir sem newlines: "Item 1. Item 2. Item 3"
+    parts = re.split(r"\s*[•\-]\s+|\s*\d+[.)]\s+", text)
+    if len(parts) > 1:
+        meaningful = [p.strip() for p in parts[1:3] if len(p.strip()) > 5]
+        if meaningful:
+            return " | ".join(meaningful)[:150]
+    return ""
+
+
 def summarize_for_executives(
     description: str,
     summary_title: str = "",
-    max_length: int = 200,
+    status: str = "",
+    max_length: int = 150,
 ) -> str:
     """
-    Create a brief executive summary from task description.
-    Suitable for board/directorate (diretoria) - concise, outcome-focused.
+    Create a brief executive summary from task content.
+    Reads description and summarizes in few words (em que pé está / o que é).
     """
-    if not description or not description.strip():
-        return summary_title if summary_title else ""
+    text = _clean_text(description or "").strip()
+    title_norm = _normalize_for_compare(summary_title) if summary_title else ""
 
-    text = _clean_text(description)
+    # 1. If we have meaningful description, extract essence
+    if len(text) > 15:
+        # Prefer bullet points (often the key deliverables)
+        bullets = _extract_bullets(text)
+        if bullets and _normalize_for_compare(bullets) != title_norm:
+            return bullets[:max_length] + ("..." if len(bullets) > max_length else "")
 
-    # Prefer first sentence (often the objective/context)
-    sentences = re.split(r"[.!?]\s+", text)
-    first = (sentences[0] + ".").strip() if sentences else ""
+        # Otherwise first sentence
+        sentences = re.split(r"[.!?]\s+", text)
+        first = (sentences[0] + ".").strip() if sentences else ""
 
-    # If first sentence is too long, truncate at word boundary
-    if len(first) > max_length:
-        truncated = first[: max_length - 3].rsplit(" ", 1)[0]
-        first = (truncated + "...") if truncated else first[:max_length] + "..."
+        # Skip if same as title or generic
+        if first and len(first) > 15 and _normalize_for_compare(first) != title_norm:
+            if len(first) > max_length:
+                first = first[: max_length - 3].rsplit(" ", 1)[0] + "..."
+            return first
 
-    # If we have nothing meaningful and no description, return empty (avoid duplicating title)
-    if not first or len(first) < 10:
-        if not text.strip():
-            return ""  # No description -> no summary (title already shown)
-        return text[:max_length] + ("..." if len(text) > max_length else "")
+        # First 2 sentences if first is too short
+        if len(first) < 20 and len(sentences) > 1:
+            combined = first + " " + (sentences[1] + ".").strip()
+            if _normalize_for_compare(combined) != title_norm:
+                return combined[:max_length] + ("..." if len(combined) > max_length else "")
 
-    return first
+    # Sem descrição útil: não mostrar nada (evitar "Situação: Em Progresso" redundante)
+    return ""

@@ -102,7 +102,7 @@ JIRA_DAYS_BACK=7
 | `JIRA_ASSIGNEE`    | Não         | Responsável (`me` = tarefas atribuídas a você — padrão, nunca usa reporter) |
 | `JIRA_DAYS_BACK`   | Não         | Quantidade de dias para trás (padrão: 7)                                |
 
-> O arquivo `.env` não deve ser commitado (já está no `.gitignore`).
+> O arquivo `.env` não deve ser commitado (já está no `.gitignore`). Relatórios gerados (relatorio*.txt, report*.md, relatorios/, etc.) também estão ignorados.
 
 ---
 
@@ -122,13 +122,18 @@ O comando padrão:
 
 - Usa as variáveis do `.env`
 - **Foca em tarefas atribuídas a você** (`assignee = currentUser()`), não nas que você criou/abriu
+- **Exclui sub-tasks** por padrão (mostra só tarefas principais)
 - Considera itens atualizados nos últimos 7 dias
-- Exibe o relatório em Markdown no terminal
+- Exibe o relatório em TXT no terminal (padrão)
 
 ### Salvar em arquivo
 
 ```bash
-jira-summary -o relatorio.md
+# TXT (padrão, ideal para enviar aos líderes)
+jira-summary -o relatorio.txt
+
+# Markdown
+jira-summary --format markdown -o relatorio.md
 ```
 
 ---
@@ -141,10 +146,11 @@ jira-summary -o relatorio.md
 | `--assignee` | `-a` | Responsável (`me` ou e-mail) |
 | `--jql` | `-q` | JQL customizado (sobrescreve projeto/assignee/days) |
 | `--days` | | Número de dias para trás (padrão: 7) |
-| `--format` | | Formato: `markdown`, `english`, `console` |
+| `--format` | | Formato: `txt` (padrão), `markdown`, `english`, `console` |
 | `--output` | `-o` | Arquivo de saída (em vez de stdout) |
 | `--max-results` | | Máximo de issues (padrão: 100) |
 | `--lang` | | Idioma do relatório: `pt` (pt-BR) ou `en` |
+| `--include-subtasks` | | Incluir sub-tasks (padrão: excluir tarefas filhas) |
 | `--env` | | Caminho para arquivo `.env` customizado |
 
 ### Exemplos
@@ -206,7 +212,7 @@ print(report)
 
 ## 8. Formato do relatório
 
-O relatório Markdown contém:
+Formatos: **TXT** (padrão) ou **Markdown**. O relatório contém:
 
 | Seção        | Conteúdo                                                        |
 |-------------|-----------------------------------------------------------------|
@@ -218,7 +224,7 @@ O relatório Markdown contém:
 
 ### Resumo para diretoria
 
-Para cada tarefa, o app **lê a descrição** (texto ou ADF) e gera um **resumo executivo** de até ~200 caracteres. O resumo usa a primeira frase ou trecho mais relevante, em linguagem objetiva para a diretoria. Tarefas sem descrição mostram apenas título e status.
+Para cada tarefa, o app **lê a descrição** (texto ou ADF) e gera um **resumo executivo** em poucas palavras. Usa a primeira frase, bullets ou trechos relevantes; se a descrição for vazia, usa o **último comentário** (o que foi feito / próximos passos). Sem conteúdo útil, a linha Resumo não é exibida. Arquivos de relatório (relatorio*.txt, report*.md, etc.) estão no `.gitignore`.
 
 ---
 
