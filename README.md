@@ -100,7 +100,7 @@ JIRA_DAYS_BACK=7
 | `JIRA_API_TOKEN`   | Sim         | Token gerado em [API Tokens](https://id.atlassian.com/manage-profile/security/api-tokens) |
 | `JIRA_PROJECT`     | Não         | Chave do projeto (ex: `PROJ`) para filtrar por padrão                    |
 | `JIRA_ASSIGNEE`    | Não         | Responsável (`me` = tarefas atribuídas a você — padrão, nunca usa reporter) |
-| `JIRA_DAYS_BACK`   | Não         | Quantidade de dias para trás (padrão: 7)                                |
+| `JIRA_DAYS_BACK`   | Não         | Dias para trás no filtro (padrão: 7). Usa `updated` — tarefas editadas, comentadas ou com status alterado no período. |
 
 > O arquivo `.env` não deve ser commitado (já está no `.gitignore`). Relatórios gerados (relatorio*.txt, report*.md, relatorios/, etc.) também estão ignorados.
 
@@ -123,7 +123,7 @@ O comando padrão:
 - Usa as variáveis do `.env`
 - **Foca em tarefas atribuídas a você** (`assignee = currentUser()`), não nas que você criou/abriu
 - **Exclui sub-tasks** por padrão (mostra só tarefas principais)
-- Considera itens atualizados nos últimos 7 dias
+- Considera itens **atualizados** nos últimos 7 dias (editados, comentados ou com status alterado; não usa data de criação)
 - Exibe o relatório em TXT no terminal (padrão)
 
 ### Salvar em arquivo
@@ -145,7 +145,7 @@ jira-summary --format markdown -o relatorio.md
 | `--project` | `-p` | Chave do projeto (ex: `PROJ`) |
 | `--assignee` | `-a` | Responsável (`me` ou e-mail) |
 | `--jql` | `-q` | JQL customizado (sobrescreve projeto/assignee/days) |
-| `--days` | | Número de dias para trás (padrão: 7) |
+| `--days` | | Dias para trás (padrão: 7). Filtro por `updated` (não `created`). |
 | `--format` | | Formato: `txt` (padrão), `markdown`, `english`, `console` |
 | `--output` | `-o` | Arquivo de saída (em vez de stdout) |
 | `--max-results` | | Máximo de issues (padrão: 100) |
