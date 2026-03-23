@@ -224,7 +224,7 @@ Formatos: **TXT** (padrão) ou **Markdown**. O relatório contém:
 
 ### Resumo para diretoria
 
-Para cada tarefa, o app **lê a descrição** (texto ou ADF) e gera um **resumo executivo** em poucas palavras. Usa a primeira frase, bullets ou trechos relevantes; se a descrição for vazia, usa o **último comentário** (o que foi feito / próximos passos). Sem conteúdo útil, a linha Resumo não é exibida. Arquivos de relatório (relatorio*.txt, report*.md, etc.) estão no `.gitignore`.
+Para cada tarefa, o app gera um **resumo executivo**. **Prioriza o último comentário** (mais atual: o que foi feito / próximos passos); se não houver comentário, usa a descrição (texto ou ADF). Usa as **primeiras 5 linhas** do conteúdo (máx. 500 caracteres). Sem conteúdo útil, a linha Resumo não é exibida. Arquivos de relatório (relatorio*.txt, report*.md, etc.) estão no `.gitignore`.
 
 ---
 

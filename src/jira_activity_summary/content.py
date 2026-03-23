@@ -57,62 +57,35 @@ def _normalize_for_compare(s: str) -> str:
     return re.sub(r"\s+", " ", s.lower().strip())[:50]
 
 
-def _extract_bullets(text: str, max_items: int = 2) -> str:
-    """Extract first bullet/numbered items from text."""
-    lines = [line.strip() for line in text.split("\n") if line.strip()]
-    items = []
-    for line in lines:
-        m = re.match(r"^[-*•]\s+(.+)", line) or re.match(r"^\d+[.)]\s+(.+)", line)
-        if m:
-            items.append(_clean_text(m.group(1)))
-        elif items:
-            break
-    if items:
-        return " | ".join(items[:max_items])[:150]
-    # ADF pode vir sem newlines: "Item 1. Item 2. Item 3"
-    parts = re.split(r"\s*[•\-]\s+|\s*\d+[.)]\s+", text)
-    if len(parts) > 1:
-        meaningful = [p.strip() for p in parts[1:3] if len(p.strip()) > 5]
-        if meaningful:
-            return " | ".join(meaningful)[:150]
-    return ""
+def _first_n_lines(text: str, n: int = 5, max_chars: int = 500) -> str:
+    """Return first n non-empty lines joined with space. Cap at max_chars."""
+    lines = [line.strip() for line in text.split("\n") if line.strip()][:n]
+    result = " ".join(lines)
+    if len(result) > max_chars:
+        result = result[: max_chars - 3].rsplit(" ", 1)[0] + "..."
+    return result
 
 
 def summarize_for_executives(
     description: str,
     summary_title: str = "",
     status: str = "",
-    max_length: int = 150,
+    max_lines: int = 5,
 ) -> str:
     """
     Create a brief executive summary from task content.
-    Reads description and summarizes in few words (em que pé está / o que é).
+    Usa as primeiras N linhas (padrão: 5) do comentário ou descrição.
     """
     text = _clean_text(description or "").strip()
     title_norm = _normalize_for_compare(summary_title) if summary_title else ""
 
-    # 1. If we have meaningful description, extract essence
-    if len(text) > 15:
-        # Prefer bullet points (often the key deliverables)
-        bullets = _extract_bullets(text)
-        if bullets and _normalize_for_compare(bullets) != title_norm:
-            return bullets[:max_length] + ("..." if len(bullets) > max_length else "")
+    if not text or len(text) < 10:
+        return ""
 
-        # Otherwise first sentence
-        sentences = re.split(r"[.!?]\s+", text)
-        first = (sentences[0] + ".").strip() if sentences else ""
+    result = _first_n_lines(text, max_lines)
 
-        # Skip if same as title or generic
-        if first and len(first) > 15 and _normalize_for_compare(first) != title_norm:
-            if len(first) > max_length:
-                first = first[: max_length - 3].rsplit(" ", 1)[0] + "..."
-            return first
+    # Evitar repetir o título
+    if _normalize_for_compare(result) == title_norm:
+        return ""
 
-        # First 2 sentences if first is too short
-        if len(first) < 20 and len(sentences) > 1:
-            combined = first + " " + (sentences[1] + ".").strip()
-            if _normalize_for_compare(combined) != title_norm:
-                return combined[:max_length] + ("..." if len(combined) > max_length else "")
-
-    # Sem descrição útil: não mostrar nada (evitar "Situação: Em Progresso" redundante)
-    return ""
+    return result

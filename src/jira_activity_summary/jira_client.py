@@ -56,7 +56,6 @@ class JiraIssue:
                 pass
         description_raw = getattr(fields, "description", None)
         description = extract_description(description_raw)
-        # Fallback: último comentário (o que foi feito / próximos passos)
         comments_text = ""
         comment_obj = getattr(fields, "comment", None)
         if comment_obj:
@@ -66,11 +65,12 @@ class JiraIssue:
                 body = getattr(last, "body", None)
                 if body:
                     comments_text = extract_description(body)
+        # Prioriza último comentário (mais atual: o que foi feito / próximos passos); fallback: descrição
         content_summary = summarize_for_executives(
-            description or comments_text,
+            comments_text or description,
             summary_title=fields.summary or "",
             status=status,
-            max_length=150,
+            max_lines=5,
         )
         return cls(
             key=issue.key,
